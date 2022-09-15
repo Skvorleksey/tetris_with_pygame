@@ -20,6 +20,59 @@ cell_colors = {
 }
 
 
+class Button(pygame.sprite.Sprite):
+    def __init__(self, x, y, width, height, text, color, text_color):
+        super().__init__()
+        self.font = pygame.font.Font(None, 30)
+        self.text_image = self.font.render(text, True, text_color)
+        self.rect, self.image = self.create_image_and_rect(x, y, width, height, color)
+
+    def create_image_and_rect(self, x, y, width, height, color):
+        image = pygame.surface.Surface((width, height))
+        image.fill(color)
+        image.blit(
+            self.text_image,
+            ((image.get_width() / 2 - self.text_image.get_width() / 2),
+             (image.get_height() / 2 - self.text_image.get_height() / 2))
+        )
+        rect = image.get_rect(topleft=(x, y))
+        return rect, image
+
+    def is_clicked(self):
+        if self.rect.collidepoint(pygame.mouse.get_pos()) and pygame.mouse.get_pressed()[0]:
+            return True
+        return False
+
+
+class Game:
+    def __init__(self):
+        self.screen = pygame.display.set_mode((500, 500))
+        self.buttons = pygame.sprite.Group()
+        self.hello_button = Button(150, 100, 200, 50, 'Start', (255, 255, 255), (0, 0, 0))
+        self.exit_button = Button(150, 200, 200, 50, 'Exit', (255, 255, 255), (0, 0, 0))
+        self.buttons.add((self.hello_button, self.exit_button))
+        self.main()
+
+    def check_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+
+    def update_screen(self):
+        self.screen.fill((125, 125, 200))
+        self.buttons.draw(self.screen)
+        pygame.display.flip()
+
+    def main(self):
+        while True:
+            self.check_events()
+            self.update_screen()
+            if self.hello_button.is_clicked():
+                Tetris()
+            elif self.exit_button.is_clicked():
+                sys.exit()
+
+
 class Tetris:
     def __init__(self):
         self.ground_width = 10
@@ -205,4 +258,5 @@ class Tetris:
             self.clock.tick(3)
 
 
-Tetris()
+# Tetris()
+Game()
