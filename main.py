@@ -19,6 +19,19 @@ cell_colors = {
     '7': (87, 75, 144),
 }
 
+first_player_buttons = {
+    'left': pygame.K_LEFT,
+    'rotate': pygame.K_UP,
+    'right': pygame.K_RIGHT,
+    'down': pygame.K_DOWN,
+}
+second_player_buttons = {
+    'left': pygame.K_a,
+    'rotate': pygame.K_w,
+    'right': pygame.K_d,
+    'down': pygame.K_s,
+}
+
 
 class Button(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height, text, color, text_color):
@@ -69,7 +82,7 @@ class Game:
         pygame.display.flip()
 
     def single_game(self):
-        tetris = Tetris(50, 0)
+        tetris = Tetris(50, 0, first_player_buttons)
         group = pygame.sprite.Group((tetris,))
 
         while not tetris.is_game_over():
@@ -82,10 +95,9 @@ class Game:
             pygame.display.flip()
             tetris.clock.tick(3)
 
-
     def game_for_two(self):
-        tetris1 = Tetris(0, 0)
-        tetris2 = Tetris(500, 0)
+        tetris1 = Tetris(0, 0, second_player_buttons)
+        tetris2 = Tetris(500, 0, first_player_buttons)
         group = pygame.sprite.Group((tetris1, tetris2))
         run = True
 
@@ -119,11 +131,12 @@ class Game:
 
 
 class Tetris(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+    def __init__(self, x, y, buttons):
         super().__init__()
         self.ground_width = 10
         self.ground_height = 20
         self.cell_size = 20
+        self.buttons = buttons
 
         self.image = pygame.surface.Surface((500, 500))
         self.rect = self.image.get_rect(topleft=(x, y))
@@ -149,7 +162,6 @@ class Tetris(pygame.sprite.Sprite):
         self.stack = [[' '] * self.ground_width for _ in range(self.ground_height)]
 
         self.draw()
-        # self.run()
 
     @staticmethod
     def greeting():
@@ -275,13 +287,13 @@ class Tetris(pygame.sprite.Sprite):
         #         sys.exit()
         #     elif event.type == pygame.KEYDOWN:
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_LEFT and self.shape.can_move_left(self.stack):
+            if event.key == self.buttons['left'] and self.shape.can_move_left(self.stack):
                 self.shape.x -= 1
-            if event.key == pygame.K_RIGHT and self.shape.can_move_right(self.stack):
+            if event.key == self.buttons['right'] and self.shape.can_move_right(self.stack):
                 self.shape.x += 1
-            if event.key == pygame.K_UP:
+            if event.key == self.buttons['rotate']:
                 self.shape.rotate_shape()
-            if event.key == pygame.K_DOWN:
+            if event.key == self.buttons['down']:
                 self.scores += 1
             if event.key == pygame.K_x:
                 print('Bye!')
