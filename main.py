@@ -1,3 +1,4 @@
+from typing import Union
 import pygame
 import sys
 
@@ -9,7 +10,7 @@ OUTER_COLOR = (8, 31, 105)
 INNER_COLOR = (0, 0, 0)
 CELL_COLOR = (220, 220, 220)
 
-cell_colors = {
+CELL_COLORS = {
     '1': (241, 144, 102),
     '2': (245, 205, 121),
     '3': (84, 109, 229),
@@ -19,13 +20,13 @@ cell_colors = {
     '7': (87, 75, 144),
 }
 
-first_player_buttons = {
+FIRST_PLAYER_BUTTONS = {
     'left': pygame.K_LEFT,
     'rotate': pygame.K_UP,
     'right': pygame.K_RIGHT,
     'down': pygame.K_DOWN,
 }
-second_player_buttons = {
+SECOND_PLAYER_BUTTONS = {
     'left': pygame.K_a,
     'rotate': pygame.K_w,
     'right': pygame.K_d,
@@ -34,13 +35,17 @@ second_player_buttons = {
 
 
 class Button(pygame.sprite.Sprite):
-    def __init__(self, x, y, width, height, text, color, text_color):
+    """Class for menu buttons"""
+    def __init__(self, x: int, y: int, width: int, height: int, text: str, color: tuple, text_color: tuple) -> None:
+        """Create font, surface with text"""
         super().__init__()
         self.font = pygame.font.Font(None, 30)
         self.text_image = self.font.render(text, True, text_color)
         self.rect, self.image = self.create_image_and_rect(x, y, width, height, color)
 
-    def create_image_and_rect(self, x, y, width, height, color):
+    def create_image_and_rect(self, x: int, y: int,
+                              width: int, height: int, color: tuple) -> tuple[pygame.Rect, pygame.Surface]:
+        """Create tuple with surface and rect objects"""
         image = pygame.surface.Surface((width, height))
         image.fill(color)
         image.blit(
@@ -51,15 +56,21 @@ class Button(pygame.sprite.Sprite):
         rect = image.get_rect(center=(x, y))
         return rect, image
 
-    def is_clicked(self):
+    def is_clicked(self) -> bool:
+        """Check if button is pressed"""
         if self.rect.collidepoint(pygame.mouse.get_pos()) and pygame.mouse.get_pressed()[0]:
             return True
         return False
 
 
 class Game:
-    def __init__(self):
+    """Main class for game"""
+    def __init__(self) -> None:
+        """
+        Initialize screen surface and buttons in main menu.
+        """
         self.screen = pygame.display.set_mode((1000, 500))
+        pygame.display.set_caption('Tetris')
         self.buttons = pygame.sprite.Group()
 
         self.single_game_button = Button(self.screen.get_width() / 2, 100, 200, 50, 'Single game',
@@ -71,18 +82,22 @@ class Game:
         self.buttons.add((self.single_game_button, self.game_for_two_button, self.exit_button))
         self.main()
 
-    def check_events(self):
+    @staticmethod
+    def check_events() -> None:
+        """Check if exit button is pressed and exit game"""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
 
-    def update_screen(self):
+    def update_screen(self) -> None:
+        """Fill background and draw buttons"""
         self.screen.fill((125, 125, 200))
         self.buttons.draw(self.screen)
         pygame.display.flip()
 
-    def single_game(self):
-        tetris = Tetris(50, 0, first_player_buttons)
+    def single_game(self) -> None:
+        """Initialize tetris object and run it's methods in main loop"""
+        tetris = Tetris(250, 0, FIRST_PLAYER_BUTTONS)
         group = pygame.sprite.Group((tetris,))
 
         while not tetris.is_game_over():
@@ -95,21 +110,19 @@ class Game:
             pygame.display.flip()
             tetris.clock.tick(3)
 
-    def game_for_two(self):
-        tetris1 = Tetris(0, 0, second_player_buttons)
-        tetris2 = Tetris(500, 0, first_player_buttons)
+    def game_for_two(self) -> None:
+        """Initialize two tetris objects and run their methods in main loop"""
+        tetris1 = Tetris(0, 0, SECOND_PLAYER_BUTTONS)
+        tetris2 = Tetris(500, 0, FIRST_PLAYER_BUTTONS)
         group = pygame.sprite.Group((tetris1, tetris2))
-        run = True
 
-        while not tetris1.is_game_over() and not tetris2.is_game_over() and run:
+        while not tetris1.is_game_over() and not tetris2.is_game_over():
             for event in pygame.event.get():
                 tetris1.control(event)
                 tetris2.control(event)
             if tetris1.logic():
-                run = False
                 break
             if tetris2.logic():
-                run = False
                 break
             tetris1.draw()
             tetris2.draw()
@@ -118,7 +131,8 @@ class Game:
             pygame.display.flip()
             tetris1.clock.tick(3)
 
-    def main(self):
+    def main(self) -> None:
+        """Run main loop for menu and check if buttons are pressed"""
         while True:
             self.check_events()
             self.update_screen()
@@ -131,7 +145,18 @@ class Game:
 
 
 class Tetris(pygame.sprite.Sprite):
-    def __init__(self, x, y, buttons):
+    """
+    Tetris object creates new display and variables for each new player.
+    Initialize it's own playground and stack 2d arrays.
+    Create level, scores, lines vars.
+    Check events for every player.
+    """
+    def __init__(self, x: int, y: int, buttons: dict) -> None:
+        """
+        Initialize it's own playground and stack 2d arrays.
+        Create level, scores, lines vars.
+        Check events for every player.
+        """
         super().__init__()
         self.ground_width = 10
         self.ground_height = 20
@@ -145,7 +170,6 @@ class Tetris(pygame.sprite.Sprite):
         self.game_display = pygame.Surface((self.ground_width * self.cell_size, self.ground_height * self.cell_size))
 
         self.is_game_on = True
-        self.greeting()
         self.ground = [[' '] * self.ground_width for _ in range(self.ground_height)]
         self.lines = 0
         self.scores = 0
@@ -163,22 +187,25 @@ class Tetris(pygame.sprite.Sprite):
 
         self.draw()
 
-    @staticmethod
-    def greeting():
-        print("Welcome to tetris game!\n")
-
-    def show_next(self, x, y):
+    def show_next(self, x: int, y: int) -> None:
+        """Draw next shape near playground"""
         for row, line in enumerate(self.shape.next_shape):
             for col, cell in enumerate(line):
                 if cell != ' ':
                     pygame.draw.rect(
                         self.image,
-                        cell_colors[cell],
+                        CELL_COLORS[cell],
                         (col * self.cell_size + x, row * self.cell_size + y + 30, self.cell_size, self.cell_size))
 
         self.image.blit(self.next_text, (x, y))
 
-    def draw(self):
+    def draw(self) -> None:
+        """
+        Fill background color.
+        Refresh 2d arrays with new values.
+        Draw updated display.
+        Draw text.
+        """
         # refresh background
         self.image.fill(OUTER_COLOR)
         self.game_display.fill(INNER_COLOR)
@@ -209,14 +236,15 @@ class Tetris(pygame.sprite.Sprite):
                 if cell != ' ':
                     pygame.draw.rect(
                         self.game_display,
-                        cell_colors[cell],
+                        CELL_COLORS[cell],
                         (col * self.cell_size, row * self.cell_size, self.cell_size, self.cell_size),
                     )
 
         # draw inner display on main window
         self.image.blit(self.game_display, (10, 10))
 
-    def logic(self):
+    def logic(self) -> None:
+        """Make the shape fall. Check collisions and completed lines."""
         # gravity
         self.shape.y += 1
 
@@ -259,33 +287,33 @@ class Tetris(pygame.sprite.Sprite):
             self.lines_text = self.font.render(f'Lines: {self.lines}', True, CELL_COLOR)
             self.scores_text = self.font.render(f'Scores: {self.scores}', True, CELL_COLOR)
 
-    def is_game_over(self):
+    def is_game_over(self) -> Union[bool, None]:
         for col in range(3, 7):
             if (row := self.get_highest_stack_point(col)) <= 2 and (row != -1):
                 return True
 
-    def is_touch_stack(self):
+    def is_touch_stack(self) -> Union[bool, None]:
+        """Check is shape touches stack"""
         col_range = [i + self.shape.x for i in range(len(self.shape.current_shape[0]))]
         for col in col_range:
             if self.get_highest_stack_point(col) - self.get_lowest_shape_point(col) == 1:
                 return True
 
-    def get_highest_stack_point(self, col):
+    def get_highest_stack_point(self, col: int) -> int:
+        """Return height(index) of first non empty cell in given column of stack"""
         for row, line in enumerate(self.stack[self.shape.y:], self.shape.y):
             if line[col] != ' ':
                 return row
         return -1
 
-    def get_lowest_shape_point(self, col):
+    def get_lowest_shape_point(self, col: int) -> int:
+        """Return height(index) of last non empty cell of shape in given column of stack"""
         for i in range(len(self.shape.current_shape) - 1, -1, -1):
             if self.shape.current_shape[i][col-self.shape.x] != ' ':
                 return i + self.shape.y
 
-    def control(self, event):
-        # for event in pygame.event.get():
-        #     if event.type == pygame.QUIT:
-        #         sys.exit()
-        #     elif event.type == pygame.KEYDOWN:
+    def control(self, event: pygame.event.Event) -> Union[bool, None]:
+        """Check if control button is pressed and change coordinates or stop the game"""
         if event.type == pygame.KEYDOWN:
             if event.key == self.buttons['left'] and self.shape.can_move_left(self.stack):
                 self.shape.x -= 1
@@ -300,22 +328,23 @@ class Tetris(pygame.sprite.Sprite):
                 self.is_game_on = False
                 return True
 
-    def run(self):
-        while self.is_game_on:
-            if self.control():
-                break
-            self.logic()
-            if self.is_game_over():
-                print('Game over!')
-                self.is_game_on = False
-
-            pygame.display.flip()
-
-            self.draw()
-
-            pygame.display.flip()
-
-            self.clock.tick(3)
+    # def run(self) -> None:
+    #     """Main loop"""
+    #     while self.is_game_on:
+    #         if self.control():
+    #             break
+    #         self.logic()
+    #         if self.is_game_over():
+    #             print('Game over!')
+    #             self.is_game_on = False
+    #
+    #         pygame.display.flip()
+    #
+    #         self.draw()
+    #
+    #         pygame.display.flip()
+    #
+    #         self.clock.tick(3)
 
 
 # Tetris()
