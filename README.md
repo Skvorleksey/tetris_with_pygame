@@ -6,7 +6,7 @@ You can select them from the main menu.
 
 Control by arrows. And by w, a, s, d keys for second player.
 
-##How to run:
+## How to run:
 
 install requirements:
 
@@ -20,7 +20,7 @@ Then run main.py manually or using:
 
     python main.py
 
-##Screenshots:
+## Screenshots:
 
 ![Menu screenshot](screenshots/menu.png)
 
